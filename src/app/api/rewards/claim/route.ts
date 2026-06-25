@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { haversineDistance } from "@/lib/geo";
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,9 +12,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const { rewardId, checkpointId, lat, lng } = body;
 
-    if (!rewardId || !lat || !lng) {
+    if (!rewardId || lat == null || lng == null) {
       return NextResponse.json(
         { error: "rewardId, lat y lng son obligatorios" },
+        { status: 400 }
+      );
+    }
+
+    const userLat = Number(lat);
+    const userLng = Number(lng);
+
+    if (Number.isNaN(userLat) || Number.isNaN(userLng)) {
+      return NextResponse.json(
+        { error: "lat y lng deben ser números válidos" },
         { status: 400 }
       );
     }
@@ -75,24 +86,25 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      const { data: distanceData, error: distError } = await supabase.rpc(
-        "distance_to_checkpoint",
-        {
-          checkpoint_id: checkpoint.id,
-          user_lat: lat,
-          user_lng: lng,
-        }
-      );
-
-      if (distError) {
-        console.error("Error distance_to_checkpoint:", distError);
+      if (
+        checkpoint.lat == null ||
+        checkpoint.lng == null ||
+        Number.isNaN(Number(checkpoint.lat)) ||
+        Number.isNaN(Number(checkpoint.lng))
+      ) {
         return NextResponse.json(
-          { error: "Error calculando distancia" },
+          { error: "Checkpoint sin coordenadas válidas" },
           { status: 500 }
         );
       }
 
-      const distance = parseFloat(distanceData ?? "Infinity");
+      const distance = haversineDistance(
+        userLat,
+        userLng,
+        Number(checkpoint.lat),
+        Number(checkpoint.lng)
+      );
+
       if (distance > checkpoint.radius_meters) {
         return NextResponse.json(
           {
@@ -128,6 +140,11 @@ export async function POST(request: NextRequest) {
       console.error("Error buscando user_reward:", existingError);
     }
 
+    const locationPayload = {
+      claimed_lat: userLat,
+      claimed_lng: userLng,
+    };
+
     if (existing) {
       if (existing.status === "claimed" || existing.status === "redeemed") {
         return NextResponse.json(
@@ -141,7 +158,7 @@ export async function POST(request: NextRequest) {
         .update({
           status: "claimed",
           claimed_at: now.toISOString(),
-          claimed_location: `POINT(${lng} ${lat})`,
+          ...locationPayload,
         })
         .eq("id", existing.id)
         .select()
@@ -168,7 +185,7 @@ export async function POST(request: NextRequest) {
         status: "claimed",
         unlocked_at: now.toISOString(),
         claimed_at: now.toISOString(),
-        claimed_location: `POINT(${lng} ${lat})`,
+        ...locationPayload,
       })
       .select()
       .single();
@@ -192,7 +209,10 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function incrementClaimed(supabase: ReturnType<typeof createSupabaseServerClient> extends Promise<infer R> ? R : never, rewardId: string) {
+async function incrementClaimed(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  rewardId: string
+) {
   await supabase.rpc("increment_reward_claimed", { reward_id: rewardId });
 }
 

@@ -1,5 +1,6 @@
 -- ============================================================
 -- VELVET GO — Rewards module: tablas de recompensas y checkpoints
+-- Usa columnas numéricas lat/lng en lugar de GEOGRAPHY(POINT).
 -- Ejecutar en: SQL Editor → New query → Run
 -- ============================================================
 
@@ -29,7 +30,8 @@ CREATE TABLE IF NOT EXISTS public.checkpoints (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   type TEXT NOT NULL DEFAULT 'location' CHECK (type IN ('location', 'qr', 'challenge')),
-  location GEOGRAPHY(POINT, 4326) NOT NULL,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL,
   radius_meters INTEGER NOT NULL DEFAULT 50,
   reward_id UUID REFERENCES public.rewards(id) ON DELETE SET NULL,
   challenge TEXT,
@@ -45,7 +47,8 @@ CREATE TABLE IF NOT EXISTS public.user_rewards (
   status TEXT NOT NULL DEFAULT 'unlocked' CHECK (status IN ('unlocked', 'claimed', 'redeemed', 'expired')),
   unlocked_at TIMESTAMPTZ DEFAULT now(),
   claimed_at TIMESTAMPTZ,
-  claimed_location GEOGRAPHY(POINT, 4326),
+  claimed_lat DOUBLE PRECISION,
+  claimed_lng DOUBLE PRECISION,
   UNIQUE(user_id, reward_id)
 );
 
@@ -59,8 +62,8 @@ CREATE TABLE IF NOT EXISTS public.checkpoint_visits (
   UNIQUE(user_id, checkpoint_id)
 );
 
--- Índices geoespaciales y de lookups frecuentes
-CREATE INDEX IF NOT EXISTS idx_checkpoints_location ON public.checkpoints USING GIST(location);
+-- Índices de lookups frecuentes
+CREATE INDEX IF NOT EXISTS idx_checkpoints_lat_lng ON public.checkpoints(lat, lng);
 CREATE INDEX IF NOT EXISTS idx_rewards_active_dates ON public.rewards(is_active, starts_at, expires_at);
 CREATE INDEX IF NOT EXISTS idx_user_rewards_user ON public.user_rewards(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_rewards_reward ON public.user_rewards(reward_id);
@@ -120,79 +123,7 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('velvet-rewards', 'velvet-rewards', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
--- 7. Funciones RPC helpers para la API
-CREATE OR REPLACE FUNCTION public.nearby_checkpoints(
-  user_lat DOUBLE PRECISION,
-  user_lng DOUBLE PRECISION,
-  search_radius INTEGER
-)
-RETURNS TABLE (
-  id UUID,
-  name TEXT,
-  type TEXT,
-  lat DOUBLE PRECISION,
-  lng DOUBLE PRECISION,
-  radius_meters INTEGER,
-  reward_id UUID,
-  reward JSONB,
-  distance_meters DOUBLE PRECISION,
-  challenge TEXT,
-  is_active BOOLEAN
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-    c.id,
-    c.name,
-    c.type,
-    ST_Y(c.location::geometry) AS lat,
-    ST_X(c.location::geometry) AS lng,
-    c.radius_meters,
-    c.reward_id,
-    to_jsonb(r.*) AS reward,
-    ST_Distance(
-      c.location::geography,
-      ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography
-    ) AS distance_meters,
-    c.challenge,
-    c.is_active
-  FROM public.checkpoints c
-  LEFT JOIN public.rewards r ON r.id = c.reward_id
-  WHERE c.is_active = true
-    AND (
-      c.reward_id IS NULL
-      OR (r.is_active = true AND (r.expires_at IS NULL OR r.expires_at >= now()))
-    )
-    AND ST_DWithin(
-      c.location::geography,
-      ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography,
-      search_radius
-    )
-  ORDER BY distance_meters ASC;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION public.distance_to_checkpoint(
-  checkpoint_id UUID,
-  user_lat DOUBLE PRECISION,
-  user_lng DOUBLE PRECISION
-)
-RETURNS DOUBLE PRECISION AS $$
-DECLARE
-  dist DOUBLE PRECISION;
-BEGIN
-  SELECT ST_Distance(
-    c.location::geography,
-    ST_SetSRID(ST_MakePoint(user_lng, user_lat), 4326)::geography
-  )
-  INTO dist
-  FROM public.checkpoints c
-  WHERE c.id = checkpoint_id;
-
-  RETURN dist;
-END;
-$$ LANGUAGE plpgsql;
-
+-- 7. Función helper para incrementar contador de claims
 CREATE OR REPLACE FUNCTION public.increment_reward_claimed(reward_id UUID)
 RETURNS void AS $$
 BEGIN

@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
       .insert({
         name,
         type: type || "location",
-        location: `POINT(${lng} ${lat})`,
+        lat,
+        lng,
         radius_meters: radius_meters ?? 50,
         reward_id,
         challenge,
