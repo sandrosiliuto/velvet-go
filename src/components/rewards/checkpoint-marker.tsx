@@ -98,9 +98,9 @@ export function CheckpointMarker({
             <h4 className="font-[family-name:var(--font-cinzel)] text-sm text-[#F4EADE] mb-1">
               {checkpoint.name}
             </h4>
-            {checkpoint.reward?.title && (
+            {checkpoint.reward?.title && typeof checkpoint.reward.title === "string" && (
               <p className="text-xs text-[#B76E79] mb-2">
-                {(checkpoint.reward as { title?: string }).title}
+                {checkpoint.reward.title}
               </p>
             )}
             {distanceText && (
