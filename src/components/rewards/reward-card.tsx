@@ -17,7 +17,7 @@ type Reward = {
   quantity_claimed?: number;
   starts_at?: string | null;
   expires_at?: string | null;
-  status?: "unlocked" | "claimed" | "redeemed" | "expired";
+  status?: "unlocked" | "claimed" | "redeemed" | "expired" | string;
 };
 
 const typeConfig = {
