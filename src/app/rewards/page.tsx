@@ -9,7 +9,9 @@ import { RewardCard } from "@/components/rewards/reward-card";
 
 export default function RewardsPage() {
   const router = useRouter();
-  const [rewards, setRewards] = useState<{ id: string; reward: Record<string, unknown>; status: string }[]>([]);
+  const [rewards, setRewards] = useState<
+  { id: string; reward: Record<string, unknown>; status: string }[]
+>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -87,16 +89,32 @@ export default function RewardsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {rewards.map((item) => (
-            <RewardCard
-              key={item.id}
-              reward={{
-                ...item.reward,
-                status: item.status,
-              }}
-              showQR
-            />
-          ))}
+          {rewards.map((item) => {
+            const reward = item.reward as {
+              id: string;
+              title: string;
+              type: "discount" | "gift" | "experience" | "vip_access";
+              description?: string | null;
+              code?: string | null;
+              partner_name?: string | null;
+              partner_logo_url?: string | null;
+              image_url?: string | null;
+              quantity_total?: number | null;
+              quantity_claimed?: number;
+              starts_at?: string | null;
+              expires_at?: string | null;
+            };
+            return (
+              <RewardCard
+                key={item.id}
+                reward={{
+                  ...reward,
+                  status: item.status,
+                }}
+                showQR
+              />
+            );
+          })}
         </div>
       )}
     </motion.main>
