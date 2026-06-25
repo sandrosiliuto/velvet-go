@@ -1,0 +1,178 @@
+@import "tailwindcss";
+
+:root {
+  --velvet-bg: #0A0A0A;
+  --velvet-surface: #2B1F2A;
+  --velvet-rose: #B76E79;
+  --velvet-rose-dark: #8F404C;
+  --velvet-rose-light: #F2D7D3;
+  --velvet-text: #F4EADE;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--velvet-bg);
+  color: var(--velvet-text);
+  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Ambiente radial malva */
+.velvet-radial {
+  background:
+    radial-gradient(circle at 50% -10%, rgba(43, 31, 42, 0.85) 0%, rgba(10, 10, 10, 0) 55%),
+    radial-gradient(circle at 100% 100%, rgba(183, 110, 121, 0.12) 0%, rgba(10, 10, 10, 0) 55%);
+}
+
+/* Glassmorphism base */
+.velvet-glass {
+  background: rgba(242, 215, 211, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Metallic rose-gold gradient */
+.metallic-rose-gold {
+  background: linear-gradient(
+    135deg,
+    #8F404C 0%,
+    #B76E79 25%,
+    #F2D7D3 50%,
+    #B76E79 75%,
+    #8F404C 100%
+  );
+  background-size: 200% 200%;
+  color: #0A0A0A;
+}
+
+button.metallic-rose-gold:hover,
+.vip-badge:hover {
+  animation: shimmer 2.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* VIP badge */
+.vip-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    135deg,
+    #8F404C 0%,
+    #B76E79 25%,
+    #F2D7D3 50%,
+    #B76E79 75%,
+    #8F404C 100%
+  );
+  background-size: 200% 200%;
+  color: #0A0A0A;
+  box-shadow: 0 2px 12px rgba(183, 110, 121, 0.35);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* Interest pill */
+.pill {
+  display: inline-block;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(242, 215, 211, 0.1);
+  border: 1px solid rgba(183, 110, 121, 0.2);
+  color: var(--velvet-rose-light);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* Sparkle animation */
+.sparkle {
+  animation: sparkle 2.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+/* Float animation */
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Hide scrollbar for horizontal lists */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth hover lift */
+.group:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+}
+
+/* Photo preview with image */
+#photo-preview.has-image {
+  color: transparent;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Disabled button state */
+button:disabled {
+  cursor: not-allowed;
+}
+
+/* Custom checkbox accent */
+input[type="checkbox"].accent-velvet-rose {
+  accent-color: var(--velvet-rose);
+}
+
+/* Letter spacing aliases */
+.tracking-logo {
+  letter-spacing: 0.35em;
+}
+
+/* Strong glass */
+.glass-strong {
+  background: rgba(20, 18, 20, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(183, 110, 121, 0.15);
+}
+
+/* Selection */
+::selection {
+  background: rgba(183, 110, 121, 0.4);
+}
