@@ -9,7 +9,7 @@ import { RewardCard } from "@/components/rewards/reward-card";
 
 export default function RewardsPage() {
   const router = useRouter();
-  const [rewards, setRewards] = useState<any[]>([]);
+  const [rewards, setRewards] = useState<{ id: string; reward: Record<string, unknown>; status: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -22,8 +22,8 @@ export default function RewardsPage() {
         }
         return res.json();
       })
-      .then((data: { rewards?: unknown[] }) => {
-        if (data) setRewards((data.rewards ?? []) as typeof rewards);
+      .then((data: { rewards?: { id: string; reward: Record<string, unknown>; status: string }[] }) => {
+        if (data) setRewards(data.rewards ?? []);
       })
       .catch(() => setError("Error cargando recompensas"))
       .finally(() => setLoading(false));

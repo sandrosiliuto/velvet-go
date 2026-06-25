@@ -43,7 +43,7 @@ export default function RewardsMapPage() {
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [selected, setSelected] = useState<Checkpoint | null>(null);
-  const [_, setError] = useState("");
+  const [, setError] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
