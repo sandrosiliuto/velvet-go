@@ -22,8 +22,8 @@ export default function RewardsPage() {
         }
         return res.json();
       })
-      .then((data) => {
-        if (data) setRewards(data.rewards ?? []);
+      .then((data: { rewards?: unknown[] }) => {
+        if (data) setRewards((data.rewards ?? []) as typeof rewards);
       })
       .catch(() => setError("Error cargando recompensas"))
       .finally(() => setLoading(false));

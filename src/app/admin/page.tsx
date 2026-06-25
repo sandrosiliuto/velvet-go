@@ -262,7 +262,7 @@ export default function AdminPage() {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => switchTab(id as any)}
+            onClick={() => switchTab(id as "users" | "rewards" | "checkpoints")}
             className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
               tab === id
                 ? "bg-[#B76E79] text-white"

@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function incrementClaimed(supabase: any, rewardId: string) {
+async function incrementClaimed(supabase: ReturnType<typeof createSupabaseServerClient> extends Promise<infer R> ? R : never, rewardId: string) {
   await supabase.rpc("increment_reward_claimed", { reward_id: rewardId });
 }
 

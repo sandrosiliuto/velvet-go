@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Marker, Circle, Popup } from "react-leaflet";
 import L from "leaflet";
-import { Gift, Crown, Sparkles, Ticket, MapPin } from "lucide-react";
+import { Gift, MapPin } from "lucide-react";
 import { renderToString } from "react-dom/server";
 
 type Checkpoint = {

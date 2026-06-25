@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { ChevronLeft, Loader2, MapPin, Navigation } from "lucide-react";
+import { ChevronLeft, Loader2, Navigation } from "lucide-react";
 import Link from "next/link";
 import { RewardClaimModal } from "@/components/rewards/reward-claim-modal";
 
@@ -43,7 +43,7 @@ export default function RewardsMapPage() {
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [selected, setSelected] = useState<Checkpoint | null>(null);
-  const [error, setError] = useState("");
+  const [_, setError] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -64,6 +64,7 @@ export default function RewardsMapPage() {
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchNearby = async (coords: [number, number]) => {

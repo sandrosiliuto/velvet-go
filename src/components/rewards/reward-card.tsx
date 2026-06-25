@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Gift, Ticket, Crown, Sparkles, MapPin, Clock } from "lucide-react";
+import { Gift, Ticket, Crown, Sparkles, Clock } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 type Reward = {
