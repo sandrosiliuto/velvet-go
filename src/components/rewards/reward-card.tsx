@@ -48,7 +48,7 @@ export function RewardCard({
       : null;
 
   const expired =
-    reward.expires_at && new Date(reward.expires_at) < new Date();
+    reward.expires_at != null && new Date(reward.expires_at) < new Date();
 
   return (
     <motion.div
