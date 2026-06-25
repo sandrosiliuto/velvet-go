@@ -119,7 +119,7 @@ export function CheckpointMarker({
             >
               {isRewarded ? "Ver recompensa" : "Ver detalle"}
             </button>
-          </div㱢;
+          </div>
         </Popup>
       </Marker>
     </>
