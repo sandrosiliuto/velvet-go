@@ -14,7 +14,7 @@ type Checkpoint = {
   lng: number;
   radius_meters: number;
   reward_id?: string | null;
-  reward?: Record<string, unknown> | null;
+  reward?: { title?: string } | null;
   distance_meters?: number;
   challenge?: string | null;
   is_active?: boolean;
@@ -98,7 +98,7 @@ export function CheckpointMarker({
             <h4 className="font-[family-name:var(--font-cinzel)] text-sm text-[#F4EADE] mb-1">
               {checkpoint.name}
             </h4>
-            {checkpoint.reward?.title && typeof checkpoint.reward.title === "string" && (
+            {checkpoint.reward?.title && (
               <p className="text-xs text-[#B76E79] mb-2">
                 {checkpoint.reward.title}
               </p>

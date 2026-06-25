@@ -13,7 +13,7 @@ type Checkpoint = {
   lng: number;
   radius_meters: number;
   reward_id?: string | null;
-  reward?: Record<string, unknown> | null;
+  reward?: { title?: string } | null;
   distance_meters?: number;
   challenge?: string | null;
   is_active?: boolean;
