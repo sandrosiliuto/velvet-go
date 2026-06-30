@@ -1,92 +1,87 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
+import { NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase-server'
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const userId = request.cookies.get("velvet_user_id")?.value;
-    if (!userId) {
-      return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+    const { swiperId, swipedId, liked } = (await req.json()) as {
+      swiperId: string
+      swipedId: string
+      liked: boolean
     }
 
-    const body = await request.json();
-    const { swipedId, direction } = body as {
-      swipedId?: string;
-      direction?: "like" | "pass";
-    };
-
-    if (!swipedId || !["like", "pass"].includes(direction || "")) {
-      return NextResponse.json({ error: "Datos inválidos" }, { status: 400 });
+    if (!swiperId || !swipedId) {
+      return NextResponse.json({ error: 'swiperId and swipedId required' }, { status: 400 })
     }
 
-    if (swipedId === userId) {
-      return NextResponse.json(
-        { error: "No puedes hacer swipe sobre ti mismo" },
-        { status: 400 }
-      );
-    }
+    const supabase = createServiceClient()
 
-    const supabase = await createSupabaseServerClient();
+    // Registrar el swipe
+    await supabase
+      .from('swipes')
+      .upsert(
+        { swiper_id: swiperId, swiped_id: swipedId, liked },
+        { onConflict: 'swiper_id,swiped_id' },
+      )
 
-    // Guardar swipe
-    const { error: swipeError } = await supabase.from("swipes").upsert(
-      {
-        swiper_id: userId,
-        swiped_id: swipedId,
-        direction,
-      },
-      { onConflict: "swiper_id, swiped_id" }
-    );
-
-    if (swipeError) {
-      console.error("Error guardando swipe:", swipeError);
-      return NextResponse.json(
-        { error: "Error guardando swipe" },
-        { status: 500 }
-      );
-    }
-
-    let match = false;
-    let matchRecord = null;
-
-    if (direction === "like") {
-      // Detectar match mutuo
-      const { data: mutual, error: mutualError } = await supabase
-        .from("swipes")
-        .select("id")
-        .eq("swiper_id", swipedId)
-        .eq("swiped_id", userId)
-        .eq("direction", "like")
-        .single();
-
-      if (mutualError && mutualError.code !== "PGRST116") {
-        console.error("Error detectando match:", mutualError);
-      }
+    // Comprobar match mutuo solo si fue un like
+    if (liked) {
+      const { data: mutual } = await supabase
+        .from('swipes')
+        .select('id')
+        .eq('swiper_id', swipedId)
+        .eq('swiped_id', swiperId)
+        .eq('liked', true)
+        .maybeSingle()
 
       if (mutual) {
-        match = true;
-        const { data: insertedMatch, error: matchError } = await supabase
-          .from("matches")
-          .insert({
-            user_a_id: userId,
-            user_b_id: swipedId,
-          })
-          .select("*")
-          .single();
+        const { data: matchedUser } = await supabase
+          .from('velvet_users')
+          .select('id, name, photo_url, phone')
+          .eq('id', swipedId)
+          .single()
 
-        if (matchError) {
-          console.error("Error creando match:", matchError);
-        } else {
-          matchRecord = insertedMatch;
-        }
+        return NextResponse.json({ matched: true, matchedUser })
       }
     }
 
-    return NextResponse.json({ success: true, matched: match, match: matchRecord ?? null });
-  } catch (error) {
-    console.error("Error en /api/swipe:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+    return NextResponse.json({ matched: false })
+  } catch (err) {
+    console.error('Swipe error:', err)
+    const message = err instanceof Error ? err.message : 'Error interno'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
+}
+
+/**
+ * DELETE /api/swipe — Elimina los rechazos (liked=false) del usuario
+ * para que esos perfiles vuelvan a aparecer.
+ * Mantiene intactos los likes (liked=true).
+ */
+export async function DELETE(req: Request) {
+  try {
+    const { swiperId } = (await req.json()) as { swiperId: string }
+
+    if (!swiperId) {
+      return NextResponse.json({ error: 'swiperId required' }, { status: 400 })
+    }
+
+    const supabase = createServiceClient()
+
+    // Eliminar SOLO los swipes con liked=false (rechazados)
+    const { error } = await supabase
+      .from('swipes')
+      .delete()
+      .eq('swiper_id', swiperId)
+      .eq('liked', false)
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true, message: 'Rechazados reiniciados' })
+  } catch (err) {
+    console.error('Reset rejected error:', err)
+    const message = err instanceof Error ? err.message : 'Error interno'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

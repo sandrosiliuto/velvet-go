@@ -140,7 +140,7 @@ export default function MatchesPage() {
       </main>
 
       <footer className="relative z-10 border-t border-white/5 py-8 text-center">
-        <p className="font-[family-name:var(--font-cinzel)] text-[#B76E79] text-sm tracking-[0.25em] uppercase mb-2">VELVET contactos</p>
+        <p className="font-[family-name:var(--font-cinzel)] text-[#B76E79] text-sm tracking-[0.25em] uppercase mb-2">VELVET GO</p>
         <p className="text-[#F2D7D3]/50 text-xs tracking-widest">EN LA VIDA TODO SON CONTACTOS · VIP</p>
       </footer>
     </>

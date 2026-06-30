@@ -8,12 +8,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status"); // unlocked | claimed | redeemed | expired
-
     const supabase = await createSupabaseServerClient();
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("user_rewards")
       .select(
         `
@@ -22,13 +19,8 @@ export async function GET(request: NextRequest) {
       `
       )
       .eq("user_id", userId)
+      .eq("status", "unlocked")
       .order("created_at", { ascending: false });
-
-    if (status) {
-      query = query.eq("status", status);
-    }
-
-    const { data, error } = await query;
 
     if (error) {
       console.error("Error obteniendo recompensas del usuario:", error);

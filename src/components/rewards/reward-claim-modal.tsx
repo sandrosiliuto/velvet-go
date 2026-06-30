@@ -12,7 +12,13 @@ type Checkpoint = {
   lng: number;
   radius_meters: number;
   reward_id?: string | null;
-  reward?: Record<string, unknown> | null;
+  reward?: {
+    id?: string;
+    title?: string;
+    description?: string | null;
+    code?: string | null;
+    image_url?: string | null;
+  } | null;
   distance_meters?: number;
   challenge?: string | null;
 };
@@ -34,9 +40,7 @@ export function RewardClaimModal({
 
   if (!checkpoint) return null;
 
-  const reward = checkpoint.reward as
-    | { id?: string; title?: string; description?: string | null; code?: string | null; image_url?: string | null }
-    | undefined;
+  const reward = checkpoint.reward;
 
   const isNearby =
     checkpoint.distance_meters != null &&
@@ -51,7 +55,6 @@ export function RewardClaimModal({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        rewardId: reward.id,
         checkpointId: checkpoint.id,
         lat: userLocation[0],
         lng: userLocation[1],
@@ -145,7 +148,7 @@ export function RewardClaimModal({
           {claimed ? (
             <div className="text-center p-4 rounded-xl bg-emerald-900/30 border border-emerald-500/30">
               <Gift className="w-8 h-8 text-emerald-400 mx-auto mb-2" />
-              <p className="text-emerald-100 font-semibold">¡Recompensa reclamada!</p>
+              <p className="text-emerald-100 font-semibold">¡Recompensa desbloqueada!</p>
               <p className="text-xs text-emerald-200/70 mt-1">Encuéntrala en tu listado de recompensas.</p>
             </div>
           ) : reward?.id ? (
@@ -160,7 +163,7 @@ export function RewardClaimModal({
                   ? "Ubicación requerida"
                   : !isNearby
                   ? "Acércate al checkpoint"
-                  : "Reclamar recompensa"}
+                  : "Desbloquear recompensa"}
               </button>
               {error && (
                 <p className="text-center text-red-400 text-sm mt-3">{error}</p>

@@ -10,11 +10,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json().catch(() => ({}));
-    const { rewardId, checkpointId, lat, lng } = body;
+    const { checkpointId, lat, lng } = body;
 
-    if (!rewardId || lat == null || lng == null) {
+    if (!checkpointId || lat == null || lng == null) {
       return NextResponse.json(
-        { error: "rewardId, lat y lng son obligatorios" },
+        { error: "checkpointId, lat y lng son obligatorios" },
         { status: 400 }
       );
     }
@@ -30,29 +30,60 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = await createSupabaseServerClient();
+    const now = new Date();
 
-    // Verificar que la reward existe, está activa y no caducada
-    const { data: reward, error: rewardError } = await supabase
-      .from("rewards")
-      .select("*")
-      .eq("id", rewardId)
-      .eq("is_active", true)
+    const { data: checkpoint, error: cpError } = await supabase
+      .from("checkpoints")
+      .select(
+        `
+        *,
+        reward:reward_id (*)
+      `
+      )
+      .eq("id", checkpointId)
       .single();
 
-    if (rewardError || !reward) {
+    if (cpError || !checkpoint) {
       return NextResponse.json(
-        { error: "Recompensa no encontrada" },
+        { error: "Checkpoint no encontrado" },
         { status: 404 }
       );
     }
 
-    const now = new Date();
+    const reward = (checkpoint.reward ?? null) as
+      | {
+          id: string;
+          title: string;
+          code: string;
+          is_active: boolean;
+          starts_at?: string | null;
+          expires_at?: string | null;
+          quantity_total?: number | null;
+          quantity_claimed?: number;
+        }
+      | null;
+
+    if (!reward) {
+      return NextResponse.json(
+        { error: "Este checkpoint no tiene recompensa asignada" },
+        { status: 400 }
+      );
+    }
+
+    if (reward.is_active === false) {
+      return NextResponse.json(
+        { error: "Recompensa inactiva" },
+        { status: 400 }
+      );
+    }
+
     if (reward.starts_at && new Date(reward.starts_at) > now) {
       return NextResponse.json(
         { error: "La recompensa aún no está disponible" },
         { status: 400 }
       );
     }
+
     if (reward.expires_at && new Date(reward.expires_at) < now) {
       return NextResponse.json(
         { error: "La recompensa ha caducado" },
@@ -60,10 +91,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Si tiene stock total y ya se agotó
     if (
       reward.quantity_total != null &&
-      reward.quantity_claimed >= reward.quantity_total
+      (reward.quantity_claimed ?? 0) >= reward.quantity_total
     ) {
       return NextResponse.json(
         { error: "Recompensa agotada" },
@@ -71,100 +101,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Si la reward está vinculada a un checkpoint, comprobar proximidad
-    if (checkpointId) {
-      const { data: checkpoint, error: cpError } = await supabase
-        .from("checkpoints")
-        .select("*")
-        .eq("id", checkpointId)
-        .single();
+    const distance = haversineDistance(
+      userLat,
+      userLng,
+      Number(checkpoint.lat),
+      Number(checkpoint.lng)
+    );
 
-      if (cpError || !checkpoint) {
-        return NextResponse.json(
-          { error: "Checkpoint no encontrado" },
-          { status: 404 }
-        );
-      }
-
-      if (
-        checkpoint.lat == null ||
-        checkpoint.lng == null ||
-        Number.isNaN(Number(checkpoint.lat)) ||
-        Number.isNaN(Number(checkpoint.lng))
-      ) {
-        return NextResponse.json(
-          { error: "Checkpoint sin coordenadas válidas" },
-          { status: 500 }
-        );
-      }
-
-      const distance = haversineDistance(
-        userLat,
-        userLng,
-        Number(checkpoint.lat),
-        Number(checkpoint.lng)
-      );
-
-      if (distance > checkpoint.radius_meters) {
-        return NextResponse.json(
-          {
-            error: "Estás demasiado lejos del checkpoint",
-            distance,
-            radius: checkpoint.radius_meters,
-          },
-          { status: 400 }
-        );
-      }
-
-      // Registrar visita al checkpoint
-      await supabase.from("checkpoint_visits").upsert(
+    if (distance > checkpoint.radius_meters) {
+      return NextResponse.json(
         {
-          user_id: userId,
-          checkpoint_id: checkpoint.id,
-          distance_meters: distance,
-          visited_at: now.toISOString(),
+          error: "Estás demasiado lejos del checkpoint",
+          distance,
+          radius: checkpoint.radius_meters,
         },
-        { onConflict: "user_id,checkpoint_id" }
+        { status: 400 }
       );
     }
 
-    // Verificar / crear user_reward
     const { data: existing, error: existingError } = await supabase
       .from("user_rewards")
-      .select("*")
+      .select("id, status")
       .eq("user_id", userId)
-      .eq("reward_id", rewardId)
-      .single();
+      .eq("reward_id", reward.id)
+      .maybeSingle();
 
-    if (existingError && existingError.code !== "PGRST116") {
+    if (existingError) {
       console.error("Error buscando user_reward:", existingError);
+      return NextResponse.json(
+        { error: "Error verificando recompensa" },
+        { status: 500 }
+      );
     }
 
-    const locationPayload = {
-      claimed_lat: userLat,
-      claimed_lng: userLng,
-    };
+    let userReward;
 
     if (existing) {
-      if (existing.status === "claimed" || existing.status === "redeemed") {
+      if (existing.status !== "unlocked") {
         return NextResponse.json(
           { error: "Ya has reclamado esta recompensa", userReward: existing },
           { status: 409 }
         );
       }
-      // unlocked -> claimed
+
       const { data: updated, error: updateError } = await supabase
         .from("user_rewards")
         .update({
-          status: "claimed",
+          status: "unlocked",
           claimed_at: now.toISOString(),
-          ...locationPayload,
+          claimed_lat: userLat,
+          claimed_lng: userLng,
         })
         .eq("id", existing.id)
         .select()
         .single();
 
-      if (updateError) {
+      if (updateError || !updated) {
         console.error("Error actualizando user_reward:", updateError);
         return NextResponse.json(
           { error: "Error reclamando recompensa" },
@@ -172,34 +164,51 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      await incrementClaimed(supabase, rewardId);
-      return NextResponse.json({ success: true, userReward: updated });
+      userReward = updated;
+    } else {
+      const { data: inserted, error: insertError } = await supabase
+        .from("user_rewards")
+        .insert({
+          user_id: userId,
+          reward_id: reward.id,
+          status: "unlocked",
+          unlocked_at: now.toISOString(),
+          claimed_at: now.toISOString(),
+          claimed_lat: userLat,
+          claimed_lng: userLng,
+        })
+        .select()
+        .single();
+
+      if (insertError || !inserted) {
+        console.error("Error creando user_reward:", insertError);
+        return NextResponse.json(
+          { error: "Error reclamando recompensa" },
+          { status: 500 }
+        );
+      }
+
+      userReward = inserted;
     }
 
-    // Crear directamente como claimed
-    const { data: created, error: insertError } = await supabase
-      .from("user_rewards")
-      .insert({
-        user_id: userId,
-        reward_id: rewardId,
-        status: "claimed",
-        unlocked_at: now.toISOString(),
-        claimed_at: now.toISOString(),
-        ...locationPayload,
-      })
-      .select()
-      .single();
+    await supabase.rpc("increment_reward_claimed", { reward_id: reward.id });
 
-    if (insertError || !created) {
-      console.error("Error creando user_reward:", insertError);
-      return NextResponse.json(
-        { error: "Error reclamando recompensa" },
-        { status: 500 }
-      );
-    }
+    await supabase.from("checkpoint_visits").insert({
+      user_id: userId,
+      checkpoint_id: checkpoint.id,
+      distance_meters: distance,
+      visited_at: now.toISOString(),
+    });
 
-    await incrementClaimed(supabase, rewardId);
-    return NextResponse.json({ success: true, userReward: created });
+    return NextResponse.json({
+      success: true,
+      userReward,
+      reward: {
+        id: reward.id,
+        title: reward.title,
+        code: reward.code,
+      },
+    });
   } catch (error) {
     console.error("Error en /api/rewards/claim:", error);
     return NextResponse.json(
@@ -207,13 +216,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-async function incrementClaimed(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
-  rewardId: string
-) {
-  await supabase.rpc("increment_reward_claimed", { reward_id: rewardId });
 }
 
 export const dynamic = "force-dynamic";

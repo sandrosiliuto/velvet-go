@@ -1,200 +1,84 @@
-"use client";
+import RegisterForm from '@/components/RegisterForm'
 
-import { useRouter } from "next/navigation";
-import { useState, useRef, FormEvent, useCallback } from "react";
-import { VelvetIsoLogo } from "@/components/velvet-logo";
-import { VelvetHeader } from "@/components/velvet-header";
+export const dynamic = 'force-dynamic'
 
-export default function RegisterPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [preview, setPreview] = useState("");
-  const [valid, setValid] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const phoneRef = useRef<HTMLInputElement>(null);
-  const consentRef = useRef<HTMLInputElement>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-
-  const validate = useCallback(() => {
-    const name = nameRef.current?.value.trim() ?? "";
-    const digits = (phoneRef.current?.value ?? "").replace(/\D/g, "");
-    const consent = consentRef.current?.checked ?? false;
-    const hasPhoto = !!photoFile && !!preview;
-    const ok = name.length >= 2 && digits.length === 9 && consent && hasPhoto;
-    setValid(ok);
-    return ok;
-  }, [photoFile, preview]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError("La foto debe pesar menos de 5 MB");
-      return;
-    }
-    setError("");
-    setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPreview(reader.result as string);
-    reader.readAsDataURL(file);
-  };
-
-  const handlePhoneInput = (e: React.FormEvent<HTMLInputElement>) => {
-    const input = e.currentTarget;
-    const digits = input.value.replace(/\D/g, "").slice(0, 9);
-    input.value = digits.replace(/(\d{3})(?=\d)/g, "$1 ").trim();
-    validate();
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setLoading(true);
-    setError("");
-
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const phone = (phoneRef.current?.value ?? "").replace(/\D/g, "");
-    formData.set("phone", phone);
-
-    try {
-      const res = await fetch("/api/register", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error en el registro");
-      router.push("/discover");
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function HomePage() {
   return (
-    <>
-      <VelvetHeader />
-      <main className="relative z-10 pt-20 pb-24 min-h-screen">
-        <section className="min-h-[85vh] flex flex-col items-center justify-center px-6 text-center">
-          <div className="relative w-28 h-28 mb-6 animate-float">
-            <div className="absolute inset-0 rounded-full bg-[#B76E79]/20 blur-2xl" />
-            <VelvetIsoLogo className="w-full h-full" />
+    <main className="relative min-h-[100dvh] flex flex-col overflow-hidden velvet-radial">
+      {/* VIP Header */}
+      <header className="fixed top-0 inset-x-0 z-50 h-14 velvet-glass border-b border-white/5">
+        <div className="max-w-md mx-auto h-full px-6 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <svg width="22" height="22" viewBox="0 0 200 200" fill="none" aria-hidden="true" className="sparkle">
+              <path d="M100 10 L112 88 L190 100 L112 112 L100 190 L88 112 L10 100 L88 88 Z" fill="url(#roseGoldHeader)" />
+              <defs>
+                <linearGradient id="roseGoldHeader" x1="0" y1="0" x2="200" y2="200">
+                  <stop offset="0%" stopColor="#8F404C" />
+                  <stop offset="35%" stopColor="#B76E79" />
+                  <stop offset="55%" stopColor="#F2D7D3" />
+                  <stop offset="75%" stopColor="#B76E79" />
+                  <stop offset="100%" stopColor="#8F404C" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <span className="font-serif text-xs tracking-[0.35em] text-[#F2D7D3]">VELVET</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="vip-badge text-[10px] font-semibold tracking-widest">VIP</span>
+            <span className="text-[10px] text-[#F2D7D3]/70 tracking-wide hidden sm:inline">ACCESO EXCLUSIVO</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Contenido */}
+      <div className="relative z-10 flex flex-col items-center justify-end min-h-[100dvh] px-5 pb-8 pt-28">
+        {/* LOGO animado */}
+        <div className="text-center mb-5 animate-fade-in-bounce">
+          <div className="relative w-28 h-28 mx-auto mb-4 animate-float">
+            <div className="absolute inset-0 rounded-full bg-[#B76E79]/20 blur-2xl"></div>
+            <svg viewBox="0 0 400 460" className="w-full h-full drop-shadow-[0_0_24px_rgba(183,110,121,0.45)]" aria-label="Isotipo VELVET">
+              <defs>
+                <linearGradient id="roseGoldIso" x1="0" y1="0" x2="400" y2="460" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#8F404C" />
+                  <stop offset="25%" stopColor="#B76E79" />
+                  <stop offset="50%" stopColor="#F2D7D3" />
+                  <stop offset="75%" stopColor="#B76E79" />
+                  <stop offset="100%" stopColor="#8F404C" />
+                </linearGradient>
+                <linearGradient id="roseGoldStroke" x1="0" y1="0" x2="400" y2="460" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#B76E79" />
+                  <stop offset="50%" stopColor="#F2D7D3" />
+                  <stop offset="100%" stopColor="#B76E79" />
+                </linearGradient>
+              </defs>
+              <path d="M55 50 L200 400 L345 50 L295 50 L200 310 L105 50 Z" fill="url(#roseGoldIso)" opacity="0.95" />
+              <path d="M138 72 C115 82 100 110 96 150 C93 190 105 230 128 260 C145 283 168 300 195 315 L200 318 L200 362 L150 325 C120 300 98 265 90 225 C82 185 88 140 108 105 C118 87 130 76 138 72 Z" fill="none" stroke="url(#roseGoldStroke)" strokeWidth="4.5" opacity="0.95" />
+              <path d="M138 72 C142 95 145 120 140 145 C138 158 132 168 122 175 C118 178 114 180 110 181" fill="none" stroke="url(#roseGoldStroke)" strokeWidth="3.5" opacity="0.9" />
+              <path d="M262 72 C285 82 300 110 304 150 C307 190 295 230 272 260 C255 283 232 300 205 315 L200 318 L200 362 L250 325 C280 300 302 265 310 225 C318 185 312 140 292 105 C282 87 270 76 262 72 Z" fill="none" stroke="url(#roseGoldStroke)" strokeWidth="4.5" opacity="0.95" />
+              <path d="M262 72 C258 95 255 120 260 145 C262 158 268 168 278 175 C282 178 286 180 290 181" fill="none" stroke="url(#roseGoldStroke)" strokeWidth="3.5" opacity="0.9" />
+              <g transform="translate(200,232)" className="sparkle">
+                <path d="M0 -44 L9 -9 L44 0 L9 9 L0 44 L-9 9 L-44 0 L-9 -9 Z" fill="#F4EADE" />
+                <circle cx="0" cy="0" r="9" fill="url(#roseGoldIso)" />
+              </g>
+            </svg>
           </div>
 
-          <h1 className="font-[family-name:var(--font-cinzel)] text-4xl sm:text-5xl font-bold tracking-wide text-[#F4EADE] mb-2">
+          <h1 className="font-serif text-4xl sm:text-5xl font-bold tracking-wide text-[#F4EADE] mb-1">
             VELVET
           </h1>
-          <p className="text-[#B76E79] text-sm tracking-[0.3em] uppercase mb-6">contactos</p>
-          <p className="text-[#F2D7D3]/80 text-sm italic mb-8">Donde la elegancia se encuentra con la conexión</p>
+          <p className="text-[#B76E79] text-sm tracking-[0.3em] uppercase mb-2">contactos</p>
+          <p className="text-[#F2D7D3]/80 text-sm italic mb-6">EN LA VIDA TODO SON CONTACTOS</p>
+        </div>
 
-          <form
-            onSubmit={handleSubmit}
-            className="w-full max-w-xs velvet-glass rounded-3xl p-6 border border-[#B76E79]/15 shadow-2xl text-left"
-          >
-            <div className="flex flex-col items-center mb-5">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-24 h-24 rounded-full border-2 border-dashed border-[#B76E79]/40 flex items-center justify-center mb-2 overflow-hidden bg-white/5 hover:border-[#B76E79]/70 transition"
-                aria-label="Subir foto"
-              >
-                <span
-                  id="photo-preview"
-                  className={`w-full h-full flex items-center justify-center text-2xl ${
-                    preview ? "has-image" : ""
-                  }`}
-                  style={preview ? { backgroundImage: `url(${preview})` } : undefined}
-                >
-                  {preview ? "" : "📷"}
-                </span>
-              </button>
-              <span className="text-xs text-[#F2D7D3]/70">Toca para agregar tu foto</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                name="photo"
-                id="reg-photo"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </div>
+        {/* Formulario */}
+        <div className="w-full max-w-sm">
+          <RegisterForm />
+        </div>
 
-            <div className="mb-4">
-              <input
-                ref={nameRef}
-                type="text"
-                name="name"
-                id="reg-name"
-                placeholder="Tu nombre"
-                required
-                onInput={validate}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-[#F4EADE] placeholder:text-[#F2D7D3]/40 focus:outline-none focus:border-[#B76E79]/50"
-              />
-            </div>
-
-            <div className="mb-2">
-              <div className="flex items-center w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus-within:border-[#B76E79]/50">
-                <span className="text-[#F2D7D3]/50 text-sm mr-3">ES</span>
-                <input
-                  ref={phoneRef}
-                  type="tel"
-                  name="phone"
-                  id="reg-phone"
-                  placeholder="612 345 678"
-                  required
-                  onInput={handlePhoneInput}
-                  className="flex-1 bg-transparent text-sm text-[#F4EADE] placeholder:text-[#F2D7D3]/40 focus:outline-none"
-                />
-              </div>
-            </div>
-            <p className="text-[11px] text-[#F2D7D3]/50 mb-4">Solo 9 dígitos · Se comparte solo si hay match</p>
-
-            <label className="flex items-start gap-3 cursor-pointer mb-6">
-              <input
-                ref={consentRef}
-                type="checkbox"
-                name="accepted"
-                id="reg-consent"
-                value="true"
-                className="mt-1 w-4 h-4 accent-velvet-rose rounded"
-                onChange={validate}
-              />
-              <span className="text-[11px] text-[#F2D7D3]/80 leading-tight">
-                Entiendo que mis datos se usan solo durante el evento y se eliminan después.
-              </span>
-            </label>
-
-            <button
-              type="submit"
-              disabled={loading || !valid}
-              className={`w-full py-4 rounded-2xl metallic-rose-gold font-semibold tracking-widest uppercase text-sm shadow-lg transition-all duration-300 ${
-                valid ? "opacity-100" : "opacity-50"
-              }`}
-            >
-              {loading ? "Entrando..." : "ENTRAR"}
-            </button>
-
-            {error && (
-              <p className="mt-4 text-xs text-center min-h-[1rem] text-red-400">{error}</p>
-            )}
-            {!error && <p className="mt-4 text-xs text-center min-h-[1rem]" />}
-          </form>
-
-          <p className="mt-6 text-[11px] text-[#F2D7D3]/50 tracking-wide max-w-xs">
-            Tus datos solo se usan hoy y se eliminan al terminar
-          </p>
-        </section>
-      </main>
-
-      <footer className="relative z-10 border-t border-white/5 py-8 text-center">
-        <p className="font-[family-name:var(--font-cinzel)] text-[#B76E79] text-sm tracking-[0.25em] uppercase mb-2">VELVET contactos</p>
-        <p className="text-[#F2D7D3]/50 text-xs tracking-widest">EN LA VIDA TODO SON CONTACTOS · VIP</p>
-      </footer>
-    </>
-  );
+        <p className="mt-4 text-[10px] text-[#F2D7D3]/40 text-center">
+          Tus datos solo se usan hoy y se eliminan al terminar
+        </p>
+      </div>
+    </main>
+  )
 }

@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VELVET GO ✨ — Acceso Exclusivo VIP
 
-## Getting Started
+App para conocer gente en eventos selectos. **Swipe**, **match mutuo** y contacto directo por **WhatsApp**.
 
-First, run the development server:
+## Frase clave
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+**EN LA VIDA TODO SON CONTACTOS**
+
+## Funcionalidades 100% operativas
+
+| Funcionalidad | Estado |
+|---|---|
+| Registro VIP (nombre + foto + teléfono) | ✅ Funcional |
+| Subida de fotos con compresión automática | ✅ Supabase Storage |
+| Visualización de participantes (swipe deck) | ✅ Tarjetas con fotos reales |
+| Like / No me gusta (botones + arrastre) | ✅ Persistido en DB |
+| Match mutuo (lógica bidireccional) | ✅ Detección automática |
+| Modal de match + botón WhatsApp | ✅ Con confeti y enlace directo |
+| Panel admin (ver usuarios + borrar datos) | ✅ Ruta protegida /admin |
+| Diseño VELVET | ✅ Colores, tipografías Cinzel/Inter, logo SVG |
+
+## Cómo funciona
+
+1. Un asistente abre la app, pone su nombre, foto y teléfono
+2. Se registra en la base de datos con su foto almacenada en la nube
+3. Ve a otros asistentes en formato de tarjetas (swipe)
+4. Puede dar Like (♥) o Pasar (✕) — deslizando o con botones
+5. Si dos personas se dan Like mutuamente → **MATCH**
+6. Aparece animación de confeti + botón para chatear por WhatsApp
+7. Al acabar el evento, el admin puede borrar todos los datos desde `/admin`
+
+## Stack técnico
+
+- **Next.js 15.3.8** (App Router, TypeScript)
+- **Supabase** (PostgreSQL + Storage)
+- **Tailwind CSS v4**
+- **Framer Motion** (gestos de swipe)
+- **canvas-confetti** (animación de match)
+
+## Variables de entorno
+
+Las variables ya están configuradas en `vercel.json` para despliegue automático.
+
+Para desarrollo local, crea `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://edawyshrkzhcnofchcyz.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkYXd5c2hya3poY25vZmNoY3l6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTcwOTksImV4cCI6MjA5NDc3MzA5OX0.MLmcZZTevxlCJaUt3jsKqMpBWUC9Rg4oOiCbfhlcpTM
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVkYXd5c2hya3poY25vZmNoY3l6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTE5NzA5OSwiZXhwIjoyMDk0NzczMDk5fQ.hVJayTLHEXQPFpYI84KObvzw3uCaBmDzCGoRs1d22Ys
+ADMIN_PASSWORD=velvet2026vip
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Despliegue en Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Importa este repo en [vercel.com/new](https://vercel.com/new)
+2. Las variables de entorno se configuran automáticamente desde `vercel.json`
+3. Click en Deploy — funciona inmediatamente
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Desarrollo local
 
-## Learn More
+```bash
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Base de datos
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ejecuta en Supabase > SQL Editor los scripts de `sql/` en orden:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. `001_schema.sql` — tablas `velvet_users` y `swipes`
+2. `002_rls.sql` — políticas RLS
+3. `003_storage.sql` — políticas del bucket `velvet-photos`
 
-## Deploy on Vercel
+También puedes usar `sql/setup_completo.sql`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Nota:** el bucket `velvet-photos` debe crearse manualmente en Supabase > Storage marcando "Public bucket" = ON.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Contraseña admin
+
+Panel de administración: `/admin`  
+Contraseña: `velvet2026vip`
+
+---
+
+**Nota**: Esta es una app temporal. Todos los datos se eliminan al terminar el evento desde el panel admin.

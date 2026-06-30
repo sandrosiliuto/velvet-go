@@ -1,39 +1,53 @@
 @import "tailwindcss";
 
-:root {
-  --velvet-bg: #0A0A0A;
-  --velvet-surface: #2B1F2A;
-  --velvet-rose: #B76E79;
-  --velvet-rose-dark: #8F404C;
-  --velvet-rose-light: #F2D7D3;
-  --velvet-text: #F4EADE;
+@theme {
+  --color-velvet-bg: #0A0A0A;
+  --color-velvet-surface: #2B1F2A;
+  --color-velvet-rose: #B76E79;
+  --color-velvet-rose-dark: #8F404C;
+  --color-velvet-rose-light: #F2D7D3;
+  --color-velvet-text: #F4EADE;
+  --color-gold: #F2D7D3;
+  --color-gold-dim: #B76E79;
+  --color-jungle-dark: #0A0A0A;
+  --color-jungle-mid: #2B1F2A;
+  --color-bg: #0A0A0A;
+  --color-card: #2B1F2A;
+  --color-border: rgba(183, 110, 121, 0.2);
 }
 
-html {
-  scroll-behavior: smooth;
+:root {
+  color-scheme: dark;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--velvet-bg);
-  color: var(--velvet-text);
-  font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background-color: var(--color-velvet-bg);
+  color: var(--color-velvet-text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
 }
 
-/* Ambiente radial malva */
-.velvet-radial {
-  background:
-    radial-gradient(circle at 50% -10%, rgba(43, 31, 42, 0.85) 0%, rgba(10, 10, 10, 0) 55%),
-    radial-gradient(circle at 100% 100%, rgba(183, 110, 121, 0.12) 0%, rgba(10, 10, 10, 0) 55%);
+/* ─── VELVET TYPOGRAPHY ───────────────────────────────────── */
+.font-serif {
+  font-family: 'Cinzel', serif;
 }
 
-/* Glassmorphism base */
+.font-sans {
+  font-family: 'Inter', sans-serif;
+}
+
+/* ─── VELVET GLASS ────────────────────────────────────────── */
 .velvet-glass {
   background: rgba(242, 215, 211, 0.05);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
 
-/* Metallic rose-gold gradient */
+/* ─── METALLIC ROSE GOLD ──────────────────────────────────── */
 .metallic-rose-gold {
   background: linear-gradient(
     135deg,
@@ -44,7 +58,6 @@ body {
     #8F404C 100%
   );
   background-size: 200% 200%;
-  color: #0A0A0A;
 }
 
 button.metallic-rose-gold:hover,
@@ -53,15 +66,11 @@ button.metallic-rose-gold:hover,
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
-/* VIP badge */
+/* ─── VIP BADGE ───────────────────────────────────────────── */
 .vip-badge {
   display: inline-flex;
   align-items: center;
@@ -79,56 +88,32 @@ button.metallic-rose-gold:hover,
   background-size: 200% 200%;
   color: #0A0A0A;
   box-shadow: 0 2px 12px rgba(183, 110, 121, 0.35);
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
 }
 
-/* Interest pill */
+/* ─── PILL / TAG ──────────────────────────────────────────── */
 .pill {
   display: inline-block;
   padding: 0.4rem 0.85rem;
   border-radius: 9999px;
   background: rgba(242, 215, 211, 0.1);
   border: 1px solid rgba(183, 110, 121, 0.2);
-  color: var(--velvet-rose-light);
+  color: var(--color-velvet-rose-light);
   font-size: 0.75rem;
   letter-spacing: 0.04em;
 }
 
-/* Sparkle animation */
+/* ─── SPARKLE ANIMATION ───────────────────────────────────── */
 .sparkle {
   animation: sparkle 2.2s ease-in-out infinite;
   transform-origin: center;
 }
 
 @keyframes sparkle {
-  0%, 100% {
-    opacity: 0.75;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.12);
-  }
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.12); }
 }
 
-/* Float animation */
-.animate-float {
-  animation: float 6s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
-}
-
-/* Hide scrollbar for horizontal lists */
+/* ─── SCROLLBAR HIDE ──────────────────────────────────────── */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -137,42 +122,60 @@ button.metallic-rose-gold:hover,
   display: none;
 }
 
-/* Smooth hover lift */
-.group:hover {
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+/* ─── FADE IN BOUNCE ──────────────────────────────────────── */
+@keyframes fade-in-bounce {
+  0%   { opacity: 0; transform: translateY(30px) scale(0.9); }
+  60%  { opacity: 1; transform: translateY(-6px) scale(1.02); }
+  80%  { transform: translateY(2px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Photo preview with image */
-#photo-preview.has-image {
-  color: transparent;
-  background-size: cover;
-  background-position: center;
+.animate-fade-in-bounce {
+  animation: fade-in-bounce 0.9s ease-out forwards;
 }
 
-/* Disabled button state */
+/* ─── FLOAT ANIMATION ─────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* ─── PULSE SLOW ──────────────────────────────────────────── */
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+/* ─── BACKGROUND RADIAL ───────────────────────────────────── */
+.velvet-radial {
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 0%, rgba(43, 31, 42, 0.85) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(183, 110, 121, 0.12) 0%, transparent 70%),
+    #0A0A0A;
+}
+
+/* ─── CARD BORDER ─────────────────────────────────────────── */
+.card-border {
+  border: 1px solid rgba(183, 110, 121, 0.12);
+  background: linear-gradient(145deg, rgba(43, 31, 42, 0.95), rgba(10, 10, 10, 0.95));
+  backdrop-filter: blur(8px);
+}
+
+/* ─── SWIPE CARD ──────────────────────────────────────────── */
+.swipe-card-bg {
+  background: linear-gradient(145deg, #2B1F2A, #0A0A0A);
+}
+
+/* ─── DISABLED BUTTON ─────────────────────────────────────── */
 button:disabled {
   cursor: not-allowed;
 }
 
-/* Custom checkbox accent */
-input[type="checkbox"].accent-velvet-rose {
-  accent-color: var(--velvet-rose);
-}
-
-/* Letter spacing aliases */
-.tracking-logo {
-  letter-spacing: 0.35em;
-}
-
-/* Strong glass */
-.glass-strong {
-  background: rgba(20, 18, 20, 0.92);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(183, 110, 121, 0.15);
-}
-
-/* Selection */
-::selection {
-  background: rgba(183, 110, 121, 0.4);
-}

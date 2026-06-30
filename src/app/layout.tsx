@@ -1,36 +1,33 @@
-import type { Metadata } from "next";
-import { Cinzel, Inter } from "next/font/google";
-import "./globals.css";
-
-const cinzel = Cinzel({
-  variable: "--font-cinzel",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
+import './globals.css'
+import type { Metadata, Viewport } from 'next'
 
 export const metadata: Metadata = {
-  title: "VELVET contactos · Acceso Exclusivo VIP",
-  description: "EN LA VIDA TODO SON CONTACTOS. VELVET contactos: socialité selectivo, lujo y conexiones VIP.",
-};
+  title: 'VELVET GO · Acceso Exclusivo VIP',
+  description: 'EN LA VIDA TODO SON CONTACTOS. VELVET GO: socialité selectivo, lujo y conexiones VIP.',
+  manifest: '/manifest.json',
+}
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export const viewport: Viewport = {
+  themeColor: '#0A0A0A',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={`${cinzel.variable} ${inter.variable} antialiased min-h-screen bg-[#0A0A0A] text-[#F4EADE] overflow-x-hidden`}>
-        <div className="fixed inset-0 pointer-events-none velvet-radial" aria-hidden="true" />
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-screen bg-[#0A0A0A] text-[#F4EADE] antialiased font-sans">
         {children}
       </body>
     </html>
-  );
+  )
 }

@@ -19,11 +19,7 @@ type Checkpoint = {
   is_active?: boolean;
 };
 
-function MapUpdater({
-  center,
-}: {
-  center: [number, number];
-}) {
+function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
     if (center[0] !== 0 && center[1] !== 0) {

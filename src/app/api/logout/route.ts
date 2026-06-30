@@ -1,22 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
 
-export async function POST() {
-  const response = NextResponse.json({ success: true });
-  response.cookies.set("velvet_user_id", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-    path: "/",
-  });
-  response.cookies.set("velvet_user_name", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: 0,
-    path: "/",
-  });
-  return response;
+export async function POST(req: Request) {
+  // Redirigir a la raíz del mismo dominio
+  const url = new URL(req.url)
+  const response = NextResponse.redirect(
+    `${url.protocol}//${url.host}/`,
+    { status: 303 },
+  )
+  response.cookies.delete('velvet_user_id')
+  return response
 }
-
-export const dynamic = "force-dynamic";

@@ -1,135 +1,128 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase-server";
-import { randomUUID } from "crypto";
-import sharp from "sharp";
+import { NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase-server'
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const formData = await request.formData();
-    const name = formData.get("name")?.toString().trim();
-    const phone = formData.get("phone")?.toString().trim();
-    const accepted = formData.get("accepted")?.toString();
-    const photo = formData.get("photo") as File | null;
+    const formData = await req.formData()
+    const name = (formData.get('name') as string)?.trim()
+    const phone = (formData.get('phone') as string)?.trim()
+    const photo = formData.get('photo') as File | null
 
-    if (!name || name.length < 2 || name.length > 60) {
-      return NextResponse.json({ error: "Nombre inválido" }, { status: 400 });
+    if (!name || !phone) {
+      return NextResponse.json({ error: 'Nombre y teléfono son obligatorios' }, { status: 400 })
     }
 
-    const phoneRegex = /^\d{9}$/;
-    if (!phone || !phoneRegex.test(phone)) {
-      return NextResponse.json(
-        { error: "Teléfono español inválido (9 dígitos)" },
-        { status: 400 }
-      );
-    }
-
-    if (accepted !== "true") {
-      return NextResponse.json(
-        { error: "Debes aceptar las condiciones" },
-        { status: 400 }
-      );
-    }
-
-    if (!photo || photo.size === 0) {
-      return NextResponse.json({ error: "Foto obligatoria" }, { status: 400 });
-    }
-
-    if (photo.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "La foto debe pesar menos de 10 MB" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = await createSupabaseServerClient();
-
-    const { data: existing } = await supabase
-      .from("velvet_users")
-      .select("id")
-      .eq("phone", phone)
-      .single();
-
-    if (existing) {
-      return NextResponse.json(
-        { error: "Este teléfono ya está registrado" },
-        { status: 409 }
-      );
-    }
-
-    // Comprimir foto a JPEG 800px de ancho
-    const arrayBuffer = await photo.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const compressed = await sharp(buffer)
-      .rotate()
-      .resize({ width: 800, height: 800, fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 85, progressive: true })
-      .toBuffer();
-
-    const fileName = `${randomUUID()}.jpg`;
-    const filePath = `${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from("velvet-photos")
-      .upload(filePath, compressed, {
-        contentType: "image/jpeg",
-        upsert: false,
-      });
-
-    if (uploadError) {
-      console.error("Error subiendo foto:", uploadError);
-      return NextResponse.json(
-        { error: "Error subiendo la foto" },
-        { status: 500 }
-      );
-    }
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("velvet-photos").getPublicUrl(filePath);
-
-    const { data: user, error: insertError } = await supabase
-      .from("velvet_users")
-      .insert({
-        name,
-        phone,
-        photo_url: publicUrl,
+    // ── DEMO MODE (sin variables de entorno) ──────────────────────
+    const isDemoMode =
+      !process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY
+    if (isDemoMode) {
+      const id = `demo-${crypto.randomUUID()}`
+      const response = NextResponse.json({ user: { id, name, photo_url: null } })
+      response.cookies.set('velvet_user_id', id, {
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 8,
+        path: '/',
       })
-      .select("id, name, phone, photo_url")
-      .single();
+      // Guardamos también el nombre para el saludo en discover
+      response.cookies.set('velvet_user_name', name, {
+        httpOnly: false,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 8,
+        path: '/',
+      })
+      return response
+    }
+    // ─────────────────────────────────────────────────────────────
 
-    if (insertError || !user) {
-      console.error("Error insertando usuario:", insertError);
-      return NextResponse.json(
-        { error: "Error registrando usuario" },
-        { status: 500 }
-      );
+    const supabase = createServiceClient()
+    let photoUrl: string | null = null
+
+    // Helper: subir foto a Supabase Storage si se proporcionó
+    async function uploadPhoto(photo: File | null): Promise<string | null> {
+      if (!photo || photo.size === 0) return null
+      try {
+        const bytes = await photo.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+        const filename = `${crypto.randomUUID()}.jpg`
+        const { error: uploadError } = await supabase.storage
+          .from('velvet-photos')
+          .upload(filename, buffer, { contentType: 'image/jpeg', cacheControl: '31536000' })
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('velvet-photos').getPublicUrl(filename)
+          return publicUrl
+        } else {
+          console.warn('Photo upload warning:', uploadError.message)
+        }
+      } catch (e) {
+        console.warn('Photo upload failed (non-blocking):', e)
+      }
+      return null
     }
 
-    const response = NextResponse.json({ success: true, user }, { status: 201 });
-    response.cookies.set("velvet_user_id", user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
-      path: "/",
-    });
-    response.cookies.set("velvet_user_name", encodeURIComponent(user.name), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30,
-      path: "/",
-    });
+    // ── Buscar si el teléfono ya está registrado (reautenticación) ──
+    const { data: existingUser, error: fetchError } = await supabase
+      .from('velvet_users')
+      .select('id, name, photo_url')
+      .eq('phone', phone)
+      .maybeSingle()
 
-    return response;
-  } catch (error) {
-    console.error("Error en /api/register:", error);
-    return NextResponse.json(
-      { error: "Error interno del servidor" },
-      { status: 500 }
-    );
+    if (fetchError) {
+      return NextResponse.json({ error: `DB: ${fetchError.message}` }, { status: 500 })
+    }
+
+    let user: { id: string; name: string; photo_url: string | null }
+
+    if (existingUser) {
+      // Reautenticación: actualizar foto si se subió una nueva
+      photoUrl = await uploadPhoto(photo)
+      if (photoUrl) {
+        const { data: updatedUser, error: updateError } = await supabase
+          .from('velvet_users')
+          .update({ photo_url: photoUrl })
+          .eq('id', existingUser.id)
+          .select('id, name, photo_url')
+          .single()
+        if (updateError) {
+          return NextResponse.json({ error: `DB: ${updateError.message}` }, { status: 500 })
+        }
+        user = updatedUser
+      } else {
+        user = existingUser
+      }
+    } else {
+      // Registro nuevo
+      photoUrl = await uploadPhoto(photo)
+      const { data: insertedUser, error } = await supabase
+        .from('velvet_users')
+        .insert({ name, phone, photo_url: photoUrl })
+        .select('id, name, photo_url')
+        .single()
+
+      if (error) {
+        return NextResponse.json({ error: `DB: ${error.message}` }, { status: 500 })
+      }
+      user = insertedUser
+    }
+
+    // Setear cookie de sesión (httpOnly) + cookie de nombre (legible desde JS)
+    const response = NextResponse.json({ user })
+    response.cookies.set('velvet_user_id', user.id, {
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 8,
+      path: '/',
+    })
+    response.cookies.set('velvet_user_name', user.name, {
+      httpOnly: false,
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 8,
+      path: '/',
+    })
+    return response
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error interno'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
