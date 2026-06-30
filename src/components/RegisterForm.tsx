@@ -53,7 +53,7 @@ export default function RegisterForm() {
       fd.append('phone', `+34${cleanPhone}`)
       if (photo) fd.append('photo', photo)
 
-      const res = await fetch('/api/register', { method: 'POST', body: fd })
+      const res = await fetch('/api/register', { method: 'POST', body: fd, credentials: 'include' })
 
       if (!res.ok) {
         let message = `Error del servidor (${res.status})`

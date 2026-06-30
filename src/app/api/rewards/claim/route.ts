@@ -4,7 +4,12 @@ import { haversineDistance } from "@/lib/geo";
 
 export async function POST(request: NextRequest) {
   try {
-    const userId = request.cookies.get("velvet_user_id")?.value;
+    let userId =
+      request.cookies.get("velvet_user_id_v2")?.value ||
+      request.cookies.get("velvet_user_id")?.value;
+    if (!userId) {
+      userId = request.headers.get("x-user-id") ?? undefined;
+    }
     if (!userId) {
       return NextResponse.json({ error: "No autenticado" }, { status: 401 });
     }

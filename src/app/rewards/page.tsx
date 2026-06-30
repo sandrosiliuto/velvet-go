@@ -33,7 +33,15 @@ export default function RewardsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/rewards")
+    const userId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("velvet_user_id_v2="))
+      ?.split("=")[1];
+
+    fetch("/api/rewards", {
+      credentials: "include",
+      headers: userId ? { "X-User-Id": userId } : {},
+    })
       .then((res) => {
         if (res.status === 401) {
           router.push("/");

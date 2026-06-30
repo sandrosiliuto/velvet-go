@@ -51,9 +51,18 @@ export function RewardClaimModal({
     setLoading(true);
     setError("");
 
+    const userId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("velvet_user_id_v2="))
+      ?.split("=")[1];
+
     const res = await fetch("/api/rewards/claim", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        ...(userId ? { "X-User-Id": userId } : {}),
+      },
       body: JSON.stringify({
         checkpointId: checkpoint.id,
         lat: userLocation[0],

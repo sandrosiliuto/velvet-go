@@ -106,17 +106,20 @@ export async function POST(req: Request) {
       user = insertedUser
     }
 
-    // Setear cookie de sesión (httpOnly) + cookie de nombre (legible desde JS)
+    // Setear cookie de sesión (legible desde JS para enviar en headers) + cookie de nombre
     const response = NextResponse.json({ user })
-    response.cookies.set('velvet_user_id', user.id, {
-      httpOnly: true,
+    response.cookies.set('velvet_user_id_v2', user.id, {
+      httpOnly: false,
       sameSite: 'lax',
+      secure: true,
       maxAge: 60 * 60 * 8,
       path: '/',
     })
+    response.cookies.set('velvet_user_id', '', { maxAge: 0, path: '/' })
     response.cookies.set('velvet_user_name', user.name, {
       httpOnly: false,
       sameSite: 'lax',
+      secure: true,
       maxAge: 60 * 60 * 8,
       path: '/',
     })

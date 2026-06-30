@@ -70,8 +70,16 @@ export default function RewardsMapPage() {
   const fetchNearby = async (coords: [number, number]) => {
     setLoadingData(true);
     try {
+      const userId = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("velvet_user_id_v2="))
+        ?.split("=")[1];
       const res = await fetch(
-        `/api/rewards/nearby?lat=${coords[0]}&lng=${coords[1]}&radius=10000`
+        `/api/rewards/nearby?lat=${coords[0]}&lng=${coords[1]}&radius=10000`,
+        {
+          credentials: "include",
+          headers: userId ? { "X-User-Id": userId } : {},
+        }
       );
       if (res.status === 401) {
         router.push("/");

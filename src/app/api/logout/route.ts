@@ -8,5 +8,6 @@ export async function POST(req: Request) {
     { status: 303 },
   )
   response.cookies.delete('velvet_user_id')
+  response.cookies.delete('velvet_user_id_v2')
   return response
 }
